@@ -1,3 +1,4 @@
+# 1
 """
 ライブラリ
 """
@@ -45,9 +46,56 @@ class Board:
         # 現在の手番の色
         self.CurrentColor = BLACK
 
+# 2
+    """
+    石を置く事による盤面の変化をボードに反映
+    """
+
+    def flipDiscs(self, x, y):
+
+        # 石を置く
+        self.RawBoard[x, y] = self.CurrentColor
+
+        # 石を裏返す処理がこの下に続く
+        # …
+
+    """
+    石を置く
+    """
+
+    def move(self, x, y):
+
+        # 置く位置が正しいかどうかをチェック
+        if x < 1 or BOARD_SIZE < x:
+            return False
+        if y < 1 or BOARD_SIZE < y:
+            return False
+        # if self.MovablePos[x, y] == 0:
+        # return False
+
+        # 石を裏返す
+        self.flipDiscs(x, y)
+
+        # 手番を進める
+        self.Turns += 1
+
+        # 手番を交代する
+        self.CurrentColor = - self.CurrentColor
+
+        # MovablePosとMovableDirの更新
+        # self.initMovable()
+
+        return True
+
 
 # ボートインスタンスの作成
 board = Board()
 
+# move関数の呼び出し
+print(board.move(2, 3))
+
 # RawBoardの中身を確認
-print(board.RawBoard)
+for y in range(10):
+    for x in range(10):
+        print('{:^3}'.format(board.RawBoard[x, y]), end='')
+    print()
