@@ -44,3 +44,10 @@ class Board:
 
         # 現在の手番の色
         self.CurrentColor = BLACK
+
+
+# ボートインスタンスの作成
+board = Board()
+
+# RawBoardの中身を確認
+print(board.RawBoard)
