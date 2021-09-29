@@ -45,6 +45,143 @@ class Board:
 
         # 現在の手番の色
         self.CurrentColor = BLACK
+    # 3
+        # 置ける場所と石が返る方向
+        self.MovablePos = np.zeros((BOARD_SIZE + 2, BOARD_SIZE + 2), dtype=int)
+        self.MovableDir = np.zeros((BOARD_SIZE + 2, BOARD_SIZE + 2), dtype=int)
+
+        # MovablePosとMovableDirを初期化
+        self.initMovable()
+    """
+    どの方向に石が裏返るかをチェック
+    """
+
+    def checkMobility(self, x, y, color):
+
+        # 注目しているマスの裏返せる方向の情報が入る
+        dir = 0
+
+        # 既に石がある場合はダメ
+        if(self.RawBoard[x, y] != EMPTY):
+            return dir
+
+        # 左
+        if(self.RawBoard[x - 1, y] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x - 2
+            y_tmp = y
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp -= 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | LEFT
+
+        # 左上
+        if(self.RawBoard[x - 1, y - 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x - 2
+            y_tmp = y - 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp -= 1
+                y_tmp -= 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | UPPER_LEFT
+
+        # 上
+        if(self.RawBoard[x, y - 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x
+            y_tmp = y - 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                y_tmp -= 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | UPPER
+
+        # 右上
+        if(self.RawBoard[x + 1, y - 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x + 2
+            y_tmp = y - 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp += 1
+                y_tmp -= 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | UPPER_RIGHT
+
+        # 右
+        if(self.RawBoard[x + 1, y] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x + 2
+            y_tmp = y
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp += 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | RIGHT
+
+        # 右下
+        if(self.RawBoard[x + 1, y + 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x + 2
+            y_tmp = y + 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp += 1
+                y_tmp += 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | LOWER_RIGHT
+
+        # 下
+        if(self.RawBoard[x, y + 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x
+            y_tmp = y + 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                y_tmp += 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | LOWER
+
+        # 左下
+        if(self.RawBoard[x - 1, y + 1] == - color):  # 直上に相手の石があるか
+
+            x_tmp = x - 2
+            y_tmp = y + 2
+
+            # 相手の石が続いているだけループ
+            while self.RawBoard[x_tmp, y_tmp] == - color:
+                x_tmp -= 1
+                y_tmp += 1
+
+            # 相手の石を挟んで自分の石があればdirを更新
+            if self.RawBoard[x_tmp, y_tmp] == color:
+                dir = dir | LOWER_LEFT
+
+        return dir
 
 # 2
     """
@@ -70,8 +207,8 @@ class Board:
             return False
         if y < 1 or BOARD_SIZE < y:
             return False
-        # if self.MovablePos[x, y] == 0:
-        # return False
+        if self.MovablePos[x, y] == 0:
+            return False
 
         # 石を裏返す
         self.flipDiscs(x, y)
@@ -83,19 +220,55 @@ class Board:
         self.CurrentColor = - self.CurrentColor
 
         # MovablePosとMovableDirの更新
-        # self.initMovable()
+        self.initMovable()
 
         return True
+# 3
+    """
+    MovablePosとMovableDirの更新
+    """
+
+    def initMovable(self):
+
+        # MovablePosの初期化（すべてFalseにする）
+        self.MovablePos[:, :] = False
+
+        # すべてのマス（壁を除く）に対してループ
+        for x in range(1, BOARD_SIZE + 1):
+            for y in range(1, BOARD_SIZE + 1):
+
+                # checkMobility関数の実行
+                dir = self.checkMobility(x, y, self.CurrentColor)
+
+                # 各マスのMovableDirにそれぞれのdirを代入
+                self.MovableDir[x, y] = dir
+
+                # dirが0でないならMovablePosにTrueを代入
+                if dir != 0:
+                    self.MovablePos[x, y] = True
 
 
 # ボートインスタンスの作成
 board = Board()
 
-# move関数の呼び出し
-print(board.move(2, 3))
-
+# テスト
 # RawBoardの中身を確認
+print('RawBoard')
 for y in range(10):
     for x in range(10):
         print('{:^3}'.format(board.RawBoard[x, y]), end='')
+    print()
+
+# MovablePosの中身を確認
+print('MovablePos')
+for y in range(10):
+    for x in range(10):
+        print('{:^3}'.format(board.MovablePos[x, y]), end='')
+    print()
+
+# MovableDirの中身を確認
+print('MovableDir')
+for y in range(10):
+    for x in range(10):
+        print('{:^3}'.format(board.MovableDir[x, y]), end='')
     print()
