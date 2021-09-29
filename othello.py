@@ -31,6 +31,8 @@ LOWER_LEFT = 2**7  # =128
 IN_ALPHABET = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 IN_NUMBER = ['1', '2', '3', '4', '5', '6', '7', '8']
  
+# 手数の上限
+MAX_TURNS = 60
 
 """
 ボードの表現
@@ -380,6 +382,53 @@ class Board:
                     self.MovablePos[x, y] = True
 
     """
+    終局判定
+    """
+    def isGameOver(self):
+ 
+        # 60手に達していたらゲーム終了
+        if self.Turns >= MAX_TURNS:
+            return True
+ 
+        # (現在の手番)打てる手がある場合はゲームを終了しない
+        if self.MovablePos[:, :].any():
+            return False
+ 
+        # (相手の手番)打てる手がある場合はゲームを終了しない
+        for x in range(1, BOARD_SIZE + 1):
+            for y in range(1, BOARD_SIZE + 1):
+ 
+                # 置ける場所が1つでもある場合はゲーム終了ではない
+                if self.checkMobility(x, y, - self.CurrentColor) != 0:
+                    return False
+ 
+        # ここまでたどり着いたらゲームは終わっている
+        return True
+ 
+
+    """
+    パスの判定
+    """
+    def skip(self):
+ 
+        # すべての要素が0のときだけパス(1つでも0以外があるとFalse)
+        if any(MovablePos[:, :]):
+            return False
+ 
+        # ゲームが終了しているときはパスできない
+        if isGameOver():
+            return False
+ 
+        # ここまで来たらパスなので手番を変える
+        self.CurrentColor = - self.CurrentColor
+ 
+        # MovablePosとMovableDirの更新
+        self.initMovable()
+ 
+        return True
+ 
+
+    """
     オセロ盤面の表示
     """
     def display(self):
@@ -401,9 +450,9 @@ class Board:
                 if grid == EMPTY:  # 空きマス
                     print('　', end="")
                 elif grid == WHITE:  # 白石
-                    print('黒', end="")
-                elif grid == BLACK:  # 黒石
                     print('白', end="")
+                elif grid == BLACK:  # 黒石
+                    print('黒', end="")
 
             # 最後に改行
             print()
@@ -423,34 +472,87 @@ class Board:
                 return True
  
         return False
- 
 
 """
 メインコード
 """
 # ボートインスタンスの作成
 board = Board()
-
-# 盤面の表示
-board.display()
-
-# 手を入力
-print('手を入力してください：', end='')
-IN = input()
  
-# 入力手をチェック
-if board.checkIN(IN):
-    x = IN_ALPHABET.index(IN[0]) + 1
-    y = IN_NUMBER.index(IN[1]) + 1
+
+# テスト用初期盤面
+# board.RawBoard = np.array([
+#     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+#     [2, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+#     [2, 1, 1,-1,-1, 1, 1, 1, 1, 2],
+#     [2, 1, 1,-1,-1,-1, 1,-1, 1, 2],
+#     [2, 1, 1, 1,-1, 1, 1, 1, 1, 2],
+#     [2, 1, 1,-1, 1,-1,-1, 0, 1, 2],
+#     [2, 1,-1, 1, 1, 1, 1, 1, 1, 2],
+#     [2, 1, 0,-1,-1,-1,-1, 1, 1, 2],
+#     [2, 1, 0, 0, 0, 0,-1, 1, 1, 2],
+#     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]])
+# board.initMovable()
+ 
+# 手番ループ
+while True:
+ 
+    # 盤面の表示
+    board.display()
+ 
+    # 手番の表示
+    if board.CurrentColor == BLACK:
+        print('黒の番です:', end = "")
+    else:
+        print('白の番です:', end = "")
+    IN = input()
+    print()
+ 
+    # 入力手をチェック
+    if board.checkIN(IN):
+        x = IN_ALPHABET.index(IN[0]) + 1
+        y = IN_NUMBER.index(IN[1]) + 1
+    else:
+        print('正しい形式(例：f5)で入力してください')
+        continue
+ 
+    # 手を打つ
+    if not board.move(x, y):
+        print('そこには置けません')
+        continue
+
+    # 終局判定
+    if board.isGameOver():
+        board.display()
+        print('おわり')
+        break
+ 
+    # パス
+    if not board.MovablePos[:, :].any():
+        board.CurrentColor = - board.CurrentColor
+        board.initMovable()
+        print('パスしました')
+        print()
+        continue
+    
+# ゲーム終了後の表示
+print()
+    
+## 各色の数
+count_black = np.count_nonzero(board.RawBoard[:, :] == BLACK)
+count_white = np.count_nonzero(board.RawBoard[:, :] == WHITE)
+    
+print('黒:', count_black)
+print('白:', count_white)
+ 
+## 勝敗
+dif = count_black - count_white
+if dif > 0:
+    print('黒の勝ち')
+elif dif < 0:
+    print('白の勝ち')
 else:
-    print('正しい形式(例：f5)で入力してください')
-
-# 手を打つ
-if not board.move(x, y):
-    print('そこには置けません')
-
-# 盤面の表示
-board.display()
+    print('引き分け')
 
 
 # # テスト
