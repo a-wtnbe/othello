@@ -2,7 +2,8 @@
 ライブラリ
 """
 import numpy as np
-
+import random
+import sys
 
 """
 定数宣言
@@ -33,6 +34,13 @@ IN_NUMBER = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 # 手数の上限
 MAX_TURNS = 60
+
+# 人間の色
+if len(sys.argv) == 2:
+    HUMAN_COLOR = sys.argv[1]
+else:
+    HUMAN_COLOR = 'B'
+
 
 """
 ボードの表現
@@ -70,6 +78,15 @@ class Board:
 
         # MovablePosとMovableDirを初期化
         self.initMovable()
+
+        # ユーザの石の色をhumanColorに格納
+        if HUMAN_COLOR == 'B':
+            self.humanColor = BLACK
+        elif HUMAN_COLOR == 'W':
+            self.humanColor = WHITE
+        else:
+            print('引数にBかWを指定してください')
+            sys.exit()
 
     """
     どの方向に石が裏返るかをチェック
@@ -481,6 +498,27 @@ class Board:
 
         return False
 
+    """
+    ランダムに手を打つCPU
+    """
+
+    def randomInput(self):
+
+        # マス判定(skip)をして置けるマスが無い場合はFalseを返す
+        if board.skip == True:
+            return False
+
+        # 置けるマス(MovablePos=1)のインデックスをgridsに格納
+        grids = np.where(self.MovablePos == 1)
+
+        # 候補からランダムに手を選ぶ
+        random_chosen_index = random.randrange(len(grids[0]))
+        x_grid = grids[0][random_chosen_index]
+        y_grid = grids[1][random_chosen_index]
+
+        # オセロの正式な座標表現で返す
+        return IN_ALPHABET[x_grid - 1] + IN_NUMBER[y_grid - 1]
+
 
 """
 メインコード
@@ -514,8 +552,20 @@ while True:
         print('橙の番です:', end="")
     else:
         print('青の番です:', end="")
-    IN = input()
+
+    # CPU or 人間
+    if board.CurrentColor == board.humanColor:
+        # 人間の手を入力
+        IN = input()
+    else:  # ランダムAI
+        IN = board.randomInput()
+        print(IN)
     print()
+
+    # 対戦を終了
+    if IN == "e":
+        print('おつかれ')
+        break
 
     # 入力手をチェック
     if board.checkIN(IN):
